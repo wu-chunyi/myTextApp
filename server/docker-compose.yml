@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # ---- PostgreSQL ----
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: myapp
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme123}
+      POSTGRES_DB: mytestapp
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U myapp -d mytestapp']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---- Node.js 后端 ----
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://myapp:${DB_PASSWORD:-changeme123}@db:5432/mytestapp?schema=public
+      JWT_SECRET: ${JWT_SECRET:-please-change-this-secret}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-please-change-this-refresh-secret}
+      # ---- 以下按需配置 ----
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_MCH_ID: ${WECHAT_MCH_ID:-}
+      WECHAT_API_KEY_V3: ${WECHAT_API_KEY_V3:-}
+      QQ_APP_ID: ${QQ_APP_ID:-}
+      QQ_APP_SECRET: ${QQ_APP_SECRET:-}
+      ALIPAY_APP_ID: ${ALIPAY_APP_ID:-}
+      ALIPAY_PRIVATE_KEY: ${ALIPAY_PRIVATE_KEY:-}
+      ALIPAY_PUBLIC_KEY: ${ALIPAY_PUBLIC_KEY:-}
+      NEWEBPAY_MERCHANT_ID: ${NEWEBPAY_MERCHANT_ID:-}
+      NEWEBPAY_HASH_KEY: ${NEWEBPAY_HASH_KEY:-}
+      NEWEBPAY_HASH_IV: ${NEWEBPAY_HASH_IV:-}
+      NOTIFY_BASE_URL: ${NOTIFY_BASE_URL:-https://api.example.com}
+    ports:
+      - '127.0.0.1:3000:3000'
+
+  # ---- Caddy 反向代理（自动 HTTPS）----
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      API_DOMAIN: ${API_DOMAIN:-api.yourdomain.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

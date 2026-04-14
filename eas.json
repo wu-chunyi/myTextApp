@@ -1,22 +1,61 @@
 {
   "cli": {
-    "version": ">= 12.0.0"
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_ENV": "DEV",
+        "APP_NAME": "MyTestApp (Dev)",
+        "APP_SCHEME": "mytestapp-dev",
+        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp.dev",
+        "NODE_ENV": "development"
+      }
     },
     "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_ENV": "PRE",
+        "APP_NAME": "MyTestApp (UAT)",
+        "APP_SCHEME": "mytestapp-pre",
+        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp.preview",
+        "NODE_ENV": "production"
+      }
+    },
+    "preview-rc": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_ENV": "RC",
+        "APP_NAME": "MyTestApp (RC)",
+        "APP_SCHEME": "mytestapp-rc",
+        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp.staging",
+        "NODE_ENV": "production"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_ENV": "ONLINE",
+        "EXPO_PUBLIC_API_URL": "https://peerless.chat",
+        "APP_NAME": "MyTestApp",
+        "APP_SCHEME": "mytestapp",
+        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp",
+        "NODE_ENV": "production"
+      },
+      "channel": "production"
+    },
+    "production-apk": {
+      "extends": "production",
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
-    },
-    "production": {}
+    }
   },
   "submit": {
     "production": {}
   }
 }
-

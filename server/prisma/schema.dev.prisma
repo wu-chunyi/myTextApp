@@ -1,0 +1,138 @@
+// ============================================
+// 开发/自用版本 - 使用 SQLite（零配置，无需装数据库）
+//
+// 使用方法：
+//   cp prisma/schema.dev.prisma prisma/schema.prisma
+//   npx prisma db push
+//
+// 数据库文件会生成在 prisma/dev.db
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  phone         String?   @unique
+  email         String?   @unique
+  password      String?
+  nickname      String    @default("")
+  avatar        String?
+  displayUid    String?   @unique
+  status        String    @default("active")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  thirdPartyBindings ThirdPartyBinding[]
+  orders             Order[]
+  verificationCodes  VerificationCode[]
+  deviceTokens       DeviceToken[]
+
+  @@map("users")
+}
+
+model ThirdPartyBinding {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  platform      String
+  platformUserId String
+  unionId       String?
+  bindTime      DateTime  @default(now())
+  status        String    @default("active")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([platform, platformUserId])
+  @@map("third_party_bindings")
+}
+
+model VerificationCode {
+  id            Int       @id @default(autoincrement())
+  target        String
+  code          String
+  type          String
+  businessType  Int       @default(0)
+  expiresAt     DateTime
+  verified      Boolean   @default(false)
+  userId        Int?
+  createdAt     DateTime  @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("verification_codes")
+}
+
+model GuestUser {
+  id            String    @id @default(uuid())
+  deviceId      String?
+  createdAt     DateTime  @default(now())
+
+  @@map("guest_users")
+}
+
+model DeviceToken {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  platform      String
+  deviceToken   String
+  deviceId      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform])
+  @@map("device_tokens")
+}
+
+model Order {
+  id            Int       @id @default(autoincrement())
+  orderNo       String    @unique
+  userId        Int
+  amount        Float
+  status        String    @default("pending")
+  orderType     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  payments Payment[]
+
+  @@map("orders")
+}
+
+model Payment {
+  id               Int       @id @default(autoincrement())
+  paymentOrderId   String    @unique
+  orderId          Int
+  amount           Float
+  paymentMethod    String
+  status           String    @default("pending")
+  thirdPartyOrderNo String?
+  paymentData      String?
+  errorMessage     String?
+  paidAt           DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+model SystemMaintenance {
+  id               Int       @id @default(autoincrement())
+  module           String    @unique
+  underMaintenance Boolean   @default(false)
+  lowestVersion    String?
+  message          String?
+  updatedAt        DateTime  @updatedAt
+
+  @@map("system_maintenance")
+}

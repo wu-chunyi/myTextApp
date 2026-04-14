@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# local deployment artifacts
+server.tar.gz
+upload_and_deploy.exp

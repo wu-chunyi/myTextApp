@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== 用户 ====================
+
+model User {
+  id            Int       @id @default(autoincrement())
+  phone         String?   @unique
+  email         String?   @unique
+  password      String?
+  nickname      String    @default("")
+  avatar        String?
+  displayUid    String?   @unique
+  status        String    @default("active") // active / banned / deleted
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  thirdPartyBindings ThirdPartyBinding[]
+  orders             Order[]
+  verificationCodes  VerificationCode[]
+  deviceTokens       DeviceToken[]
+
+  @@map("users")
+}
+
+// ==================== 第三方绑定 ====================
+
+model ThirdPartyBinding {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  platform      String    // apple / google / wechat / qq / line
+  platformUserId String   // 第三方平台用户ID (openid / sub)
+  unionId       String?   // 微信 unionId
+  bindTime      DateTime  @default(now())
+  status        String    @default("active")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([platform, platformUserId])
+  @@map("third_party_bindings")
+}
+
+// ==================== 验证码 ====================
+
+model VerificationCode {
+  id            Int       @id @default(autoincrement())
+  target        String    // 手机号或邮箱
+  code          String
+  type          String    // sms / email
+  businessType  Int       @default(0) // 0=注册登录 1=换绑 2=商家
+  expiresAt     DateTime
+  verified      Boolean   @default(false)
+  userId        Int?
+  createdAt     DateTime  @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([target, type, businessType])
+  @@map("verification_codes")
+}
+
+// ==================== 访客 ====================
+
+model GuestUser {
+  id            String    @id @default(uuid())
+  deviceId      String?
+  createdAt     DateTime  @default(now())
+
+  @@map("guest_users")
+}
+
+// ==================== 设备 Token ====================
+
+model DeviceToken {
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  platform      String    // client / business
+  deviceToken   String
+  deviceId      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform])
+  @@map("device_tokens")
+}
+
+// ==================== 订单 ====================
+
+model Order {
+  id            Int       @id @default(autoincrement())
+  orderNo       String    @unique @default(uuid())
+  userId        Int
+  amount        Decimal   @db.Decimal(10, 2)
+  status        String    @default("pending") // pending / paid / cancelled / refunded
+  orderType     Int       @default(0) // 0=优惠买单 1=套餐券
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  payments Payment[]
+
+  @@index([userId])
+  @@map("orders")
+}
+
+// ==================== 支付 ====================
+
+model Payment {
+  id               Int       @id @default(autoincrement())
+  paymentOrderId   String    @unique @default(uuid())
+  orderId          Int
+  amount           Decimal   @db.Decimal(10, 2)
+  paymentMethod    String    // wechat_app / wechat_h5 / alipay_app / alipay_h5 / newebpay
+  status           String    @default("pending") // pending / processing / success / failed / cancelled
+  thirdPartyOrderNo String?  // 第三方支付单号
+  paymentData      Json?     // 第三方返回的原始数据
+  errorMessage     String?
+  paidAt           DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@map("payments")
+}
+
+// ==================== 系统维护 ====================
+
+model SystemMaintenance {
+  id               Int       @id @default(autoincrement())
+  module           String    @unique // global / payment / ...
+  underMaintenance Boolean   @default(false)
+  lowestVersion    String?
+  message          String?
+  updatedAt        DateTime  @updatedAt
+
+  @@map("system_maintenance")
+}

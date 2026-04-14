@@ -1,0 +1,22 @@
+# 把 api.yourdomain.com 改成你的真实域名
+# Caddy 会自动申请 Let's Encrypt SSL 证书
+
+{$API_DOMAIN:peerless.chat} {
+  reverse_proxy api:3000
+
+  # 日志
+  log {
+    output file /var/log/caddy/access.log
+  }
+
+  # 安全头
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+}
+
+http://124.220.110.158 {
+  reverse_proxy api:3000
+}
