@@ -1,7 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Alert, Platform, Linking, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import * as cheerio from 'cheerio';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
 import type { RootStackParamList } from '../../navigation/types';
@@ -17,11 +16,17 @@ type PaymentRouteProp = RouteProp<RootStackParamList, 'Payment'>;
 
 /** 解析蓝新金流表单 HTML */
 const parseNewebPayForm = (rawHtml: string) => {
-  const $ = cheerio.load(rawHtml);
-  const form = $('#mainForm');
-  const field = (name: string) => form.find(`input[name="${name}"]`).attr('value') ?? '';
+  const formMatch = rawHtml.match(/<form[^>]*id=["']mainForm["'][^>]*action=["']([^"']+)["'][^>]*>([\s\S]*?)<\/form>/i);
+  const formInnerHtml = formMatch?.[2] ?? rawHtml;
+  const action = formMatch?.[1] ?? '';
+  const field = (name: string) => {
+    const inputMatch = formInnerHtml.match(
+      new RegExp(`<input[^>]*name=["']${name}["'][^>]*value=["']([^"']*)["'][^>]*>`, 'i')
+    );
+    return inputMatch?.[1] ?? '';
+  };
   return {
-    action: form.attr('action') ?? '',
+    action,
     MerchantID: field('MerchantID'),
     TradeInfo: field('TradeInfo'),
     TradeSha: field('TradeSha'),

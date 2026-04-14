@@ -68,6 +68,7 @@ module.exports = {
       'expo-image-picker',
       'expo-localization',
       'expo-video',
+      'expo-web-browser',
       'expo-location',
       'expo-notifications',
       'expo-tracking-transparency',
