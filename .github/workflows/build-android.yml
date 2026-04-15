@@ -40,38 +40,49 @@ jobs:
       - name: 📦 Install dependencies
         run: npm ci
 
-      - name: 🔨 Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
+      - name: 👷 Trigger Android APK On EAS Cloud
+        id: android_build
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          eas build --platform android --profile production-apk --non-interactive --no-wait --json > eas-android-build.json
+          python3 - <<'PY'
+          import json
 
-      # ⚡ 缓存 Gradle 依赖（核心优化，可节省 3-5 分钟）
-      - name: ⚡ Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: gradle-
+          with open('eas-android-build.json', 'r', encoding='utf-8') as f:
+              data = json.load(f)
 
-      # ⚡ 缓存 EAS 本地构建产物
-      - name: ⚡ Cache EAS build
-        uses: actions/cache@v4
-        with:
-          path: ~/.expo
-          key: expo-${{ hashFiles('app.json', 'eas.json', 'package-lock.json') }}
-          restore-keys: expo-
+          build = data[0] if isinstance(data, list) else data
+          build_id = build["id"]
+          build_url = f"https://expo.dev/accounts/wu-expo/projects/my-test-app/builds/{build_id}"
 
-      - name: 👷 Build Android APK
-        run: eas build --local --platform android --profile preview --non-interactive --output ./app-release.apk
+          with open('build_outputs.txt', 'w', encoding='utf-8') as f:
+              f.write(f"build_id={build_id}\n")
+              f.write(f"build_url={build_url}\n")
 
-      - name: 📱 Upload APK
+          print(f"Triggered Android build: {build_id}")
+          print(f"Build URL: {build_url}")
+          PY
+          cat build_outputs.txt >> "$GITHUB_OUTPUT"
+
+      - name: 📝 Build Summary
+        run: |
+          {
+            echo "## Android remote build triggered"
+            echo ""
+            echo "- Profile: \`production-apk\`"
+            echo "- Build ID: \`${{ steps.android_build.outputs.build_id }}\`"
+            echo "- Build URL: ${{ steps.android_build.outputs.build_url }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 📱 Upload build metadata
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: ./app-release.apk
+          name: android-eas-build
+          path: |
+            eas-android-build.json
+            build_outputs.txt
           retention-days: 14
 
   build-ios:
@@ -105,13 +116,5 @@ jobs:
           key: pods-${{ hashFiles('**/Podfile.lock') }}
           restore-keys: pods-
 
-      - name: 👷 Build iOS
-        run: eas build --local --platform ios --profile preview --non-interactive --output ./app-release.ipa
-
-      - name: 📱 Upload IPA
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: ./app-release.ipa
-          retention-days: 14
-
+      - name: 👷 Trigger iOS Build On EAS Cloud
+        run: eas build --platform ios --profile production --non-interactive --no-wait
