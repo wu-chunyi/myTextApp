@@ -19,26 +19,10 @@ export const useAuthSDK = () => {
 
   /**
    * 微信登录
-   * 调起微信客户端授权，返回 code
-   * 后端用 code 换取 access_token + openid + unionid
+   * Android 打包兼容性问题临时关闭
    */
   const authWechat = async (): Promise<{ code: string }> => {
-    const WechatLib = require('react-native-wechat-lib');
-
-    // 检查微信是否已安装
-    const isInstalled = await WechatLib.isWXAppInstalled();
-    if (!isInstalled) {
-      throw new Error('请先安装微信');
-    }
-
-    const res = await WechatLib.sendAuthRequest('snsapi_userinfo', 'wechat_login');
-    if (res.errCode === 0) {
-      return { code: res.code };
-    }
-    if (res.errCode === -2) {
-      throw Object.assign(new Error('用户取消微信登录'), { code: 'ERR_REQUEST_CANCELED' });
-    }
-    throw new Error(res.errStr || '微信登录失败');
+    throw new Error('微信登录暂时关闭，请先使用手机号、QQ 或 Apple 登录');
   };
 
   /**

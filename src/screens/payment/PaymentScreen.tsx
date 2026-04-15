@@ -87,26 +87,11 @@ export const PaymentScreen: React.FC = () => {
 
   // ---- 微信支付 APP ----
   const payWithWechatApp = async (data: PaymentOrderInfo) => {
-    if (!data.wechatPayParams) throw new Error('微信支付参数缺失');
-    const WechatLib = require('react-native-wechat-lib');
-    const isInstalled = await WechatLib.isWXAppInstalled();
-    if (!isInstalled) throw new Error('请先安装微信');
-
-    const res = await WechatLib.pay({
-      partnerId: data.wechatPayParams.partnerId,
-      prepayId: data.wechatPayParams.prepayId,
-      nonceStr: data.wechatPayParams.nonceStr,
-      timeStamp: data.wechatPayParams.timeStamp,
-      package: data.wechatPayParams.package,
-      sign: data.wechatPayParams.sign,
-    });
-    if (res.errCode === 0) {
-      navigateToResult({ businessOrderNo: data.businessOrderNo });
-    } else if (res.errCode === -2) {
-      navigation.goBack(); // 用户取消
-    } else {
-      throw new Error(res.errStr || '微信支付失败');
+    if (data.wechatH5Url) {
+      await payWithWechatH5(data);
+      return;
     }
+    throw new Error('微信 App 支付暂时关闭，请改用微信 H5 或其他支付方式');
   };
 
   // ---- 微信 H5 ----
