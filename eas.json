@@ -21,8 +21,7 @@
         "EXPO_PUBLIC_ENV": "PRE",
         "APP_NAME": "MyTestApp (UAT)",
         "APP_SCHEME": "mytestapp-pre",
-        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp.preview",
-        "NODE_ENV": "production"
+        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp.preview"
       }
     },
     "preview-rc": {
@@ -31,8 +30,7 @@
         "EXPO_PUBLIC_ENV": "RC",
         "APP_NAME": "MyTestApp (RC)",
         "APP_SCHEME": "mytestapp-rc",
-        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp.staging",
-        "NODE_ENV": "production"
+        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp.staging"
       }
     },
     "production": {
@@ -42,8 +40,7 @@
         "EXPO_PUBLIC_API_URL": "https://peerless.chat",
         "APP_NAME": "MyTestApp",
         "APP_SCHEME": "mytestapp",
-        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp",
-        "NODE_ENV": "production"
+        "APP_UNIQUE_IDENTIFIER": "com.wuexpo.mytestapp"
       },
       "channel": "production"
     },
