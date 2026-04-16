@@ -81,6 +81,7 @@ module.exports = {
         },
       ],
       ['expo-splash-screen', splash],
+      './plugins/withAndroidManifestFix',
       // TODO: 添加 Firebase 插件
       // '@react-native-firebase/app',
       // '@react-native-firebase/crashlytics',
